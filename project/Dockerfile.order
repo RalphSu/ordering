@@ -1,0 +1,19 @@
+FROM openjdk:alpine
+
+RUN addgroup -g 1001 ops \
+    && adduser -u 1001 -G ops -D ops
+
+RUN mkdir -p /opt/ops \
+    && mkdir -p /opt/ops/config \
+    && mkdir -p /opt/ops/logs
+
+ADD orderServer/target/orderServer-0.1.0.jar /opt/ops
+
+RUN chown -R ops:ops /opt/ops \
+    && chmod u+x /opt/ops/orderServer-0.1.0.jar
+
+WORKDIR /opt/ops
+
+USER ops
+
+CMD ["java", "-jar /opt/ops/orderServer-0.1.0.jar"]
