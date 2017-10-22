@@ -18,4 +18,4 @@ USER ops
 
 EXPOSE 9000
 
-CMD ["java", "-jar /opt/ops/restServer-0.1.0.jar"]
+CMD ["java", "-jar", "/opt/ops/restServer-0.1.0.jar"]

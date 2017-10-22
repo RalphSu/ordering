@@ -16,6 +16,13 @@
     </parent>
 
     <dependencies>
+        <!--using model definition from common-->
+        <dependency>
+            <groupId>net.samhosue</groupId>
+            <artifactId>common</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+
         <!--using log4j2-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

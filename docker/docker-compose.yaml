@@ -1,13 +1,43 @@
 version: '3.1'
 
 services:
-    redis:
+    orderserver:
+        image: orderserver:dev
+        links:
+            - rabbitmq
+            - db
+        restart: always
+
+    restserver:
+        image: restserver:dev
+        links:
+            - rabbitmq
+            - db
+        restart: always
+        ports:
+            - 9000:9000
+            - 9001:9001
+
+    rabbitmq:
+        image: rabbitmq
+        hostname: rabbit
+        restart: always
+        environment:
+            RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+            RABBITMQ_DEFAULT_USER: "rabbitmq"
+            RABBITMQ_DEFAULT_PASS: "rabbitmq"
+            RABBITMQ_DEFAULT_VHOST: "/"
+        ports:
+            - "15672:15672"
+            - "5672:5672"
 
     db:
         image: postgres
         restart: always
         environment:
             POSTGRES_PASSWORD: example
+        ports:
+            - "5432:5432"
 
     adminer:
         image: adminer

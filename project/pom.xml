@@ -16,6 +16,8 @@
     <modules>
         <module>restServer</module>
         <module>orderServer</module>
+        <module>benchmark</module>
+        <module>common</module>
     </modules>
 
     <build>

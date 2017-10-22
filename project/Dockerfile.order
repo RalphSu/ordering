@@ -16,4 +16,4 @@ WORKDIR /opt/ops
 
 USER ops
 
-CMD ["java", "-jar /opt/ops/orderServer-0.1.0.jar"]
+CMD ["java", "-jar", "/opt/ops/orderServer-0.1.0.jar"]

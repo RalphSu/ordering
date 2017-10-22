@@ -1,11 +1,12 @@
-package net.samhouse.impl;
+package net.samhouse.model;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  *
  */
-public class Order {
+public class Order implements Serializable{
 
     private String orderID;
 
