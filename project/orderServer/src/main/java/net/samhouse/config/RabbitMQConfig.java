@@ -1,7 +1,6 @@
 package net.samhouse.config;
 
-import net.samhouse.model.Order;
-import net.samhouse.impl.OrderListener;
+import net.samhouse.impl.OrderHandler;
 import net.samhouse.model.Step;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -10,15 +9,12 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -26,7 +22,6 @@ import java.util.stream.Stream;
  */
 @SpringBootConfiguration
 public class RabbitMQConfig {
-    private static final String END = "END";
 
     @Value("${mq.rabbit.host}")
     private String host;
@@ -42,6 +37,12 @@ public class RabbitMQConfig {
 
     @Value("${mq.rabbit.vhost}")
     private String vhost;
+
+    @Value("${mq.rabbit.consumers}")
+    private Integer consumers;
+
+    @Value("${mq.rabbit.maxconsumers}")
+    private Integer maxconsumers;
 
     /**
      *
@@ -72,68 +73,93 @@ public class RabbitMQConfig {
     @Bean
     public RabbitMessagingTemplate rabbitTemplate(RabbitTemplate rabbitTemplate) {
         RabbitMessagingTemplate rabbitMessagingTemplate = new RabbitMessagingTemplate();
-        rabbitMessagingTemplate.setMessageConverter(new MappingJackson2MessageConverter());
+        rabbitMessagingTemplate.setMessageConverter(messageConverter());
         rabbitMessagingTemplate.setRabbitTemplate(rabbitTemplate);
         return rabbitMessagingTemplate;
     }
 
     @Bean
-    public Queue scheduleQueue() {
-        return new Queue("order"+Step.Phase.SCHEDULING.value());
+    public MappingJackson2MessageConverter messageConverter() {
+        return new MappingJackson2MessageConverter();
     }
 
-//    @Bean
-//    public Queue preprocessQueue() {
-//        return new Queue("order"+Step.Phase.PRE_PROCESSING.value());
-//    }
-//
-//    @Bean
-//    public Queue processQueue() {
-//        return new Queue("order"+Step.Phase.PROCESSING.value());
-//    }
-//
-//    @Bean
-//    public Queue postprocessQueue() {
-//        return new Queue("order"+Step.Phase.POST_PROCESSING.value());
-//    }
-//
-//    @Bean
-//    public Queue endQueue() {
-//        return new Queue("order"+END);
-//    }
+    @Bean
+    public DirectExchange orderExchange() {
+        DirectExchange exchange = new DirectExchange("order");
+        return exchange;
+    }
 
     @Bean
-    SimpleMessageListenerContainer container(ConnectionFactory connectionFactory,
-                                             OrderListener listener) {
+    public Queue scheduleQueue() {
+        return new Queue(Step.Phase.SCHEDULING.value());
+    }
+
+    @Bean
+    public Binding scheduleBinding() {
+        return BindingBuilder
+                .bind(scheduleQueue())
+                .to(orderExchange())
+                .with(Step.Phase.SCHEDULING.value());
+    }
+
+    @Bean
+    public Queue preprocessQueue() {
+        return new Queue(Step.Phase.PRE_PROCESSING.value());
+    }
+
+    @Bean
+    public Binding preprocessBind() {
+        return BindingBuilder
+                .bind(preprocessQueue())
+                .to(orderExchange())
+                .with(Step.Phase.PRE_PROCESSING.value());
+    }
+
+    @Bean
+    public Queue processQueue() {
+        return new Queue(Step.Phase.PROCESSING.value());
+    }
+
+    @Bean
+    public Binding processBind() {
+        return BindingBuilder
+                .bind(processQueue())
+                .to(orderExchange())
+                .with(Step.Phase.PROCESSING.value());
+    }
+
+    @Bean
+    public Queue postprocessQueue() {
+        return new Queue(Step.Phase.POST_PROCESSING.value());
+    }
+
+    @Bean
+    public Binding postprocessBind() {
+        return BindingBuilder
+                .bind(postprocessQueue())
+                .to(orderExchange())
+                .with(Step.Phase.POST_PROCESSING.value());
+    }
+
+    @Bean
+    SimpleMessageListenerContainer container(ConnectionFactory connectionFactory) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
 
-//        Stream<String> phases = Stream.of(Step.Phase.values())
-//                .map(s -> "order" + s.value());
-//        container.setQueueNames(appendToStream(phases, "order"+END).toArray(String[]::new));
+        Stream<String> phases = Stream.of(Step.Phase.SCHEDULING,
+                Step.Phase.PRE_PROCESSING, Step.Phase.PROCESSING, Step.Phase.POST_PROCESSING)
+                .map(Step.Phase::value);
+        container.setQueueNames(phases.toArray(String[]::new));
 
-        container.setQueueNames(new String[] {"orderSCHEDULING"});
-        container.setMessageListener(listener);
+        container.setMessageListener(new MessageListenerAdapter(handler()));
+        container.setConcurrentConsumers(consumers);
+        container.setMaxConcurrentConsumers(maxconsumers);
 
         return container;
     }
 
-    private <T> Stream<T> appendToStream(Stream<? extends T> stream, T element) {
-        return Stream.concat(stream, Stream.of(element));
-    }
-
     @Bean
-    OrderListener listener() {
-        return new OrderListener();
-    }
-
-    @Bean
-    DirectExchange exchange() {
-        return new DirectExchange("orderExchange");
-    }
-
-    @Bean
-    Binding binding(Queue queue, DirectExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with("order");
+    OrderHandler handler() {
+        return new OrderHandler();
     }
 }

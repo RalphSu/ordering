@@ -48,7 +48,7 @@ public class MainAppTest {
         ResponseEntity<String> entity = testRestTemplate.
                 withBasicAuth("submitter", "submitter")
                 .postForEntity(
-                        "http://localhost:" + port + "/submit", new Order("", new Date(), new Date()), String.class);
+                        "http://localhost:" + port + "/submit", new Order(), String.class);
 
         then(entity.getBody()).isEqualTo("orderID");
         then(entity.getStatusCode()).isEqualTo(HttpStatus.OK);

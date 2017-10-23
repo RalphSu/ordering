@@ -37,6 +37,6 @@ public class MainApp implements CommandLineRunner {
             System.out.println("welcome");
         }
 
-        exit(0);
+//        exit(0);
     }
 }
