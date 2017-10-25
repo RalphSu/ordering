@@ -1,9 +1,13 @@
 package net.samhouse.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static net.samhouse.Utils.timeToString;
 
 /**
  * Order POJO
@@ -96,14 +100,18 @@ public class Order implements Serializable {
         return this.currentStep;
     }
 
+    @JsonIgnore
+    private void setCurrentStep(Step.Phase currentPhase) {
+        if (currentStep.getCurrentPhase() != currentPhase) {
+            steps.add(currentStep.setCurrentPhase(currentPhase));
+        }
+    }
     /**
      * as step phase changed, we need to add an item to step list
      * @param currentStep
      */
     public void setCurrentStep(Step currentStep) {
-        if (currentStep.getCurrentPhase() != this.currentStep.getCurrentPhase()) {
-            steps.add(this.currentStep.setCurrentPhase(currentStep.getCurrentPhase()));
-        }
+        setCurrentStep(currentStep.getCurrentPhase());
     }
 
     /**
@@ -111,7 +119,7 @@ public class Order implements Serializable {
      */
     public void setToFailed() {
         if (currentStep.getCurrentPhase() != Step.Phase.FAILED) {
-            steps.add(currentStep.setCurrentPhase(Step.Phase.FAILED));
+            setCurrentStep(Step.Phase.FAILED);
         }
         setCompleteTime(System.currentTimeMillis());
     }
@@ -121,6 +129,50 @@ public class Order implements Serializable {
      * next currentStep will be set to default failed
      */
     public void moveToNextStep() {
-        steps.add(currentStep.moveToNextPhase());
+        Step.Phase nextPhase = currentStep.GetNextPhase();
+        setCurrentStep(nextPhase);
+        if (currentStep.getCurrentPhase().equals(Step.Phase.COMPLETED) ||
+                currentStep.getCurrentPhase().equals(Step.Phase.FAILED)) {
+            setCompleteTime(System.currentTimeMillis());
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Order order = (Order) o;
+
+        if (startTime != order.startTime) return false;
+        if (completeTime != order.completeTime) return false;
+        if (!orderID.equals(order.orderID)) return false;
+        if (!currentStep.equals(order.currentStep)) return false;
+        return steps.equals(order.steps);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = orderID.hashCode();
+        result = 31 * result + (int) (startTime ^ (startTime >>> 32));
+        result = 31 * result + (int) (completeTime ^ (completeTime >>> 32));
+        result = 31 * result + currentStep.hashCode();
+        result = 31 * result + steps.hashCode();
+        return result;
+    }
+
+    /**
+     * TODO use StringBuilder
+     * @return
+     */
+    @Override
+    public String toString() {
+        return "Order{" +
+                "orderID='" + orderID + '\'' +
+                ", startTime=" + timeToString(startTime) +
+                ", completeTime=" + timeToString(completeTime) +
+                ", currentStep=" + currentStep +
+                ", steps=" + steps +
+                '}';
     }
 }

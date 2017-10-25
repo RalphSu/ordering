@@ -1,6 +1,7 @@
-package net.samhouse.benchmark;
+package net.samhouse;
 
 import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -21,9 +22,13 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Objects.requireNonNull;
 
 public class MicroBench {
+
     @Benchmark
-    public long test() {
-        return 0;
+    public long testTimeToString(Blackhole bh) {
+        long time = System.currentTimeMillis();
+        String timeString = Utils.timeToString(time);
+        bh.consume(timeString);
+        return time;
     }
 
     public static void main(String[] args) throws RunnerException, InterruptedException {

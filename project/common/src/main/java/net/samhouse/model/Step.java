@@ -1,13 +1,21 @@
 package net.samhouse.model;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.stream.Stream;
+
+import static net.samhouse.Utils.timeToString;
 
 /**
  * POJO for Steps
  */
 public class Step implements Serializable {
+
+    public static final String SCHEDULING = "SCHEDULING";
+    public static final String PRE_PROCESSING = "PRE_PROCESSING";
+    public static final String PROCESSING = "PROCESSING";
+    public static final String POST_PROCESSING = "POST_PROCESSING";
+    public static final String COMPLETED = "COMPLETED";
+    public static final String FAILED = "FAILED";
 
     /**
      * enumeration for step phases, we have scheduling,
@@ -15,12 +23,12 @@ public class Step implements Serializable {
      * the last two phase are used for failure and completion
      */
     public enum Phase {
-        SCHEDULING("SCHEDULING"),
-        PRE_PROCESSING("PRE_PROCESSING"),
-        PROCESSING("PROCESSING"),
-        POST_PROCESSING("POST_PROCESSING"),
-        COMPLETED("COMPLETED"),
-        FAILED("FAILED");
+        SCHEDULING(Step.SCHEDULING),
+        PRE_PROCESSING(Step.PRE_PROCESSING),
+        PROCESSING(Step.PROCESSING),
+        POST_PROCESSING(Step.POST_PROCESSING),
+        COMPLETED(Step.COMPLETED),
+        FAILED(Step.FAILED);
 
         private final String phase;
 
@@ -31,7 +39,7 @@ public class Step implements Serializable {
             this.phase = step;
         }
 
-        public String value() {return phase;};
+        public final String value() {return phase;}
 
         /**
          *
@@ -144,8 +152,72 @@ public class Step implements Serializable {
                 return setCurrentPhase(Phase.POST_PROCESSING);
             case POST_PROCESSING:
                 return setCurrentPhase(Phase.COMPLETED);
+            // Keep unchanged
+            case COMPLETED:
+            case FAILED:
+                return this;
             default:
                 return setCurrentPhase(Phase.FAILED);
         }
+    }
+
+    public Phase GetNextPhase() {
+        switch (currentPhase) {
+            case SCHEDULING:
+                return Phase.PRE_PROCESSING;
+            case PRE_PROCESSING:
+                return Phase.PROCESSING;
+            case PROCESSING:
+                return Phase.POST_PROCESSING;
+            case POST_PROCESSING:
+                return Phase.COMPLETED;
+            // Keep unchanged
+            case COMPLETED:
+            case FAILED:
+                return currentPhase;
+            default:
+                return Phase.FAILED;
+        }
+    }
+
+    /**
+     * Intellij generated equals method
+     * @param o
+     * @return
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Step step = (Step) o;
+
+        if (startTime != step.startTime) return false;
+        if (completeTime != step.completeTime) return false;
+        return currentPhase == step.currentPhase;
+    }
+
+    /**
+     * Intellij generated hashCode
+     * @return
+     */
+    @Override
+    public int hashCode() {
+        int result = (int) (startTime ^ (startTime >>> 32));
+        result = 31 * result + (int) (completeTime ^ (completeTime >>> 32));
+        result = 31 * result + currentPhase.hashCode();
+        return result;
+    }
+
+    /**
+     * TODO use StringBuilder
+     * @return
+     */
+    @Override
+    public String toString() {
+        return "Step{" +
+                "start time=" + timeToString(startTime) +
+                ", completed time=" + timeToString(completeTime) +
+                ", current phase='" + currentPhase + "'}";
     }
 }

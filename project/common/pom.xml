@@ -22,9 +22,15 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
     </dependencies>
     <properties>
         <java.version>1.8</java.version>
+        <jackson.version>2.9.0</jackson.version>
     </properties>
 
     <build>
