@@ -18,6 +18,7 @@
         <module>orderServer</module>
         <module>benchmark</module>
         <module>common</module>
+        <module>loadGenerator</module>
     </modules>
 
     <build>

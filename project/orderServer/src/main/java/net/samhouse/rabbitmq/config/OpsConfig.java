@@ -1,6 +1,8 @@
-package net.samhouse.config;
+package net.samhouse.rabbitmq.config;
 
-import net.samhouse.impl.*;
+import com.google.common.collect.Lists;
+import net.samhouse.rabbitmq.Handler;
+import net.samhouse.rabbitmq.impl.handlers.*;
 import net.samhouse.model.Step;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
@@ -17,7 +19,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,14 +46,39 @@ public class OpsConfig implements RabbitListenerConfigurer{
     /**
      * consumer threads used by spring to receive messages
      */
-    @Value("${mq.rabbit.consumers:5}")
+    @Value("${mq.rabbit.consumers:50}")
     private Integer consumers;
 
     /**
      * max consumer threads
      */
-    @Value("${mq.rabbit.maxconsumers:10}")
+    @Value("${mq.rabbit.maxconsumers:50}")
     private Integer maxconsumers;
+
+    @Bean
+    public ScheduleHandler scheduleHandler() {
+        return new ScheduleHandler();
+    }
+
+    @Bean
+    PreProcessHandler preProcessHandler() {
+        return new PreProcessHandler();
+    }
+
+    @Bean
+    ProcessHandler processHandler() {
+        return new ProcessHandler();
+    }
+
+    @Bean
+    PostProcessHandler postProcessHandler() {
+        return new PostProcessHandler();
+    }
+
+    @Bean
+    EndStateHandler endStateHandler() {
+        return new EndStateHandler();
+    }
 
     /**
      * return handler that really handle orders
@@ -60,12 +86,8 @@ public class OpsConfig implements RabbitListenerConfigurer{
      */
     @Bean
     public List<Handler> handlers() {
-        List<Handler> handlers = new ArrayList<>();
-        handlers.add(new ScheduleHandler());
-        handlers.add(new PreProcessHandler());
-        handlers.add(new ProcessHandler());
-        handlers.add(new PostProcessHandler());
-        handlers.add(new EndStateHandler());
+        List<Handler> handlers = Lists.newArrayList(scheduleHandler(), preProcessHandler(),
+                processHandler(), postProcessHandler(), endStateHandler());
         return handlers;
     }
 

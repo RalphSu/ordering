@@ -47,7 +47,7 @@
         <RollingFile name="RollingFileDebug" fileName="${log-path}/debug.log"
                      filePattern="${log-path}/$${date:yyyy-MM}/debug-%d{yyyy-MM-dd}-%i.log">
             <ThresholdFilter level="all" onMatch="ACCEPT" onMismatch="DENY"/>
-            <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+            <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%t] [%p] - %l - %m%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy/>
                 <SizeBasedTriggeringPolicy size="100 MB"/>

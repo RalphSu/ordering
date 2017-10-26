@@ -1,4 +1,4 @@
-package net.samhouse.impl;
+package net.samhouse.rabbitmq.impl;
 
 import net.samhouse.model.Order;
 import org.slf4j.Logger;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class OrderSender {
 
-    private  static final Logger log = LoggerFactory.getLogger(OrderSender.class);
+    private static final Logger log = LoggerFactory.getLogger(OrderSender.class);
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -21,11 +21,11 @@ public class OrderSender {
     }
 
     /**
-     *
      * @param order
      */
     public void deliverOrder(Order order) {
-        log.debug("Deliver order[{}] to queue", order.getOrderID());
+        log.debug("Deliver order[{}, {}] to queue",
+                order.getOrderID(), order.getCurrentStep().getCurrentPhase());
         try {
             rabbitTemplate.convertAndSend(order.getCurrentStep().getCurrentPhase().value(), order);
         } catch (AmqpException e) {

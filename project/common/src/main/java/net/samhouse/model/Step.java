@@ -16,6 +16,7 @@ public class Step implements Serializable {
     public static final String POST_PROCESSING = "POST_PROCESSING";
     public static final String COMPLETED = "COMPLETED";
     public static final String FAILED = "FAILED";
+    private static final long serialVersionUID = 1784911171331472918L;
 
     /**
      * enumeration for step phases, we have scheduling,
@@ -112,12 +113,16 @@ public class Step implements Serializable {
         return currentPhase;
     }
 
+    public void setCurrentPhase(Phase currentPhase) {
+        this.currentPhase = currentPhase;
+    }
+
     /**
      *
      * @param currentPhase
      * @return return an either new or this step object
      */
-    public Step setCurrentPhase(Phase currentPhase) {
+    public Step changeCurrentPhase(Phase currentPhase) {
 
         // save current time
         long currentTime = System.currentTimeMillis();
@@ -145,19 +150,19 @@ public class Step implements Serializable {
     public Step moveToNextPhase() {
         switch (currentPhase) {
             case SCHEDULING:
-                return setCurrentPhase(Phase.PRE_PROCESSING);
+                return changeCurrentPhase(Phase.PRE_PROCESSING);
             case PRE_PROCESSING:
-                return setCurrentPhase(Phase.PROCESSING);
+                return changeCurrentPhase(Phase.PROCESSING);
             case PROCESSING:
-                return setCurrentPhase(Phase.POST_PROCESSING);
+                return changeCurrentPhase(Phase.POST_PROCESSING);
             case POST_PROCESSING:
-                return setCurrentPhase(Phase.COMPLETED);
+                return changeCurrentPhase(Phase.COMPLETED);
             // Keep unchanged
             case COMPLETED:
             case FAILED:
                 return this;
             default:
-                return setCurrentPhase(Phase.FAILED);
+                return changeCurrentPhase(Phase.FAILED);
         }
     }
 

@@ -1,7 +1,5 @@
 package net.samhouse.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +12,7 @@ import static net.samhouse.Utils.timeToString;
  */
 public class Order implements Serializable {
 
+    private static final long serialVersionUID = 5887207333319968742L;
     /**
      * represents current order id, should be a uuid value
      */
@@ -100,18 +99,21 @@ public class Order implements Serializable {
         return this.currentStep;
     }
 
-    @JsonIgnore
-    private void setCurrentStep(Step.Phase currentPhase) {
+    public void setCurrentStep(Step currentStep) {
+        this.currentStep = currentStep;
+    }
+
+    private void changeCurrentStep(Step.Phase currentPhase) {
         if (currentStep.getCurrentPhase() != currentPhase) {
-            steps.add(currentStep.setCurrentPhase(currentPhase));
+            steps.add(currentStep.changeCurrentPhase(currentPhase));
         }
     }
     /**
      * as step phase changed, we need to add an item to step list
      * @param currentStep
      */
-    public void setCurrentStep(Step currentStep) {
-        setCurrentStep(currentStep.getCurrentPhase());
+    public void changeCurrentStep(Step currentStep) {
+        changeCurrentStep(currentStep.getCurrentPhase());
     }
 
     /**
@@ -119,7 +121,7 @@ public class Order implements Serializable {
      */
     public void setToFailed() {
         if (currentStep.getCurrentPhase() != Step.Phase.FAILED) {
-            setCurrentStep(Step.Phase.FAILED);
+            changeCurrentStep(Step.Phase.FAILED);
         }
         setCompleteTime(System.currentTimeMillis());
     }
@@ -130,7 +132,7 @@ public class Order implements Serializable {
      */
     public void moveToNextStep() {
         Step.Phase nextPhase = currentStep.GetNextPhase();
-        setCurrentStep(nextPhase);
+        changeCurrentStep(nextPhase);
         if (currentStep.getCurrentPhase().equals(Step.Phase.COMPLETED) ||
                 currentStep.getCurrentPhase().equals(Step.Phase.FAILED)) {
             setCompleteTime(System.currentTimeMillis());

@@ -29,7 +29,7 @@ public class OrderTest {
                 0, order.getSteps().size());
 
         Step processing = new Step(Step.Phase.PROCESSING, currentTime, currentTime);
-        order.setCurrentStep(processing);
+        order.changeCurrentStep(processing);
         assertEquals("After set current step a new step, step list should be 1",
                 1, order.getSteps().size());
 
