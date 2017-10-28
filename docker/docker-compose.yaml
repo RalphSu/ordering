@@ -25,8 +25,8 @@ services:
             RABBIT_HOST: 192.168.3.80
             POSTGRE_HOST: 192.168.3.80       
         ports:
-            - 9000:9000
-            - 9001:9001
+            - 9090:9090
+            - 9091:9091
 
     rabbitmq:
         image: rabbitmq:3-management
