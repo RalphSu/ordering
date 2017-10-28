@@ -11,7 +11,9 @@ services:
         restart: always
         environment:
             RABBIT_HOST: 192.168.3.80
-            POSTGRE_HOST: 192.168.3.80        
+            POSTGRE_HOST: 192.168.3.80
+            RABBIT_CONSUMERS: 5
+            RABBIT_MAXCONSUMERS: 10 
 
     restserver:
         image: restserver:dev
