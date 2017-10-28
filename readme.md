@@ -37,7 +37,7 @@
 6. If query performance is crucial, we can put all the handled order in redis, and client can query fro redis only,
   and there could be a back ground process to sync redis and db. - Not implemented
 
-** ![REST API swagger yaml](https://github.com/nonsense-huang/ordering/blob/master/swagger.yaml) **
+**![REST API swagger yaml](https://github.com/nonsense-huang/ordering/blob/master/swagger.yaml)**
 
 #### Queue implementation
 * Six queues in rabbitmq
@@ -71,6 +71,7 @@
   * You can use `submitter/submitter` or `querier/querier` to send `POST` or `GET` request
 3. No web ui
 4. The deployment of order processing system is not well done, either some manual work or some problems will happen
+5. More performance tuning...
 
 ### How to make it work
 #### Prerequiste
@@ -96,6 +97,7 @@
     according to the swagger definition file.
 
 **Or you can:**  
+**(This option depends on your hardware, in my laptop it needs a fresh system restart and about 10mins to wait all containers started stably)**  
  1. cd project folder
  2. execute build.sh to build the system (both jar and docker image)
  3. cd docker folder
@@ -106,6 +108,7 @@
   ```
  5. If everything goes well, you can open postman to send post/get request
     according to the swagger definition file.
+
 
 ### Results
 #### Source structure
@@ -118,6 +121,14 @@
   * orderServer - order handling service
   * restServer - rest service to client
 
+
+* load generator can be used to generate both rest post request to rest server or
+  send messages to rabbitmq directly
+  ```bash
+  java -jar target/loadGenerator-0.1.0.jar --method=rest --type=i
+  # --method=[rest(t)|rabbit(r)] stands for sending post requests or rabbitmq messages
+  # --type=[full(f)|interval(i)] stands for send test data at full speed/time interval manner
+  ```
 
 * microbenchmark
   By running `java -jar microbenchmarks.jar` we can get the a micro benchmark result of some focused functions
