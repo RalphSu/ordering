@@ -8,6 +8,7 @@ RUN mkdir -p /opt/ops \
     && mkdir -p /opt/ops/logs
 
 ADD orderServer/target/orderServer-0.1.0.jar /opt/ops
+ADD orderServer/config/* /opt/ops/config/
 
 RUN chown -R ops:ops /opt/ops \
     && chmod u+x /opt/ops/orderServer-0.1.0.jar

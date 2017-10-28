@@ -3,24 +3,36 @@ version: '3.1'
 services:
     orderserver:
         image: orderserver:dev
+        networks:
+            - order-net   
         links:
             - rabbitmq
             - db
         restart: always
+        environment:
+            RABBIT_HOST: 192.168.3.80
+            POSTGRE_HOST: 192.168.3.80        
 
     restserver:
         image: restserver:dev
+        networks:
+            - order-net   
         links:
             - rabbitmq
             - db
         restart: always
+        environment:
+            RABBIT_HOST: 192.168.3.80
+            POSTGRE_HOST: 192.168.3.80       
         ports:
             - 9000:9000
             - 9001:9001
 
     rabbitmq:
-        image: rabbitmq
+        image: rabbitmq:3-management
         hostname: rabbit
+        networks:
+            - order-net   
         restart: always
         environment:
             RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
@@ -33,9 +45,12 @@ services:
 
     db:
         image: postgres
+        networks:
+            - order-net   
         restart: always
         environment:
-            POSTGRES_PASSWORD: example
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: db
         ports:
             - "5432:5432"
 
@@ -44,3 +59,8 @@ services:
         restart: always
         ports:
             - 8080:8080
+
+networks:
+    order-net:
+        driver: bridge        
+
