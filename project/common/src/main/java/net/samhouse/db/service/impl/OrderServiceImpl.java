@@ -8,7 +8,8 @@ import org.springframework.stereotype.Service;
 
 
 /**
- *
+ * order service implementaion
+ * delegate to order dao
  */
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -28,7 +29,15 @@ public class OrderServiceImpl implements OrderService {
      * @param orderID
      */
     @Override
-    public void getOrderById(String orderID) {
-        Order order = orderDao.findOrderById(orderID);
+    public void delete(String orderID) {
+        orderDao.delete(orderID);
+    }
+
+    /**
+     * @param orderID
+     */
+    @Override
+    public Order getById(String orderID) {
+        return orderDao.findById(orderID);
     }
 }

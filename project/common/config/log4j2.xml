@@ -7,7 +7,6 @@
     <appenders>
         <console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
-            <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
         </console>
 
         <File name="log" fileName="${log-path}/test.log" append="false">
@@ -44,10 +43,22 @@
                 <SizeBasedTriggeringPolicy size="100 MB"/>
             </Policies>
         </RollingFile>
+
+        <RollingFile name="RollingFileDebug" fileName="${log-path}/debug.log"
+                     filePattern="${log-path}/$${date:yyyy-MM}/debug-%d{yyyy-MM-dd}-%i.log">
+            <ThresholdFilter level="all" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%t] [%p] - %l - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+        </RollingFile>
     </appenders>
 
     <loggers>
-        <logger name="org.springframework" level="INFO"></logger>
+	<logger name="org.springframework" level="all">
+            <appender-ref ref="RollingFileDebug"/>
+	</logger>
         <root level="all">
             <appender-ref ref="Console"/>
             <appender-ref ref="RollingFileInfo"/>

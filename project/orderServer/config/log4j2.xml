@@ -7,6 +7,7 @@
     <appenders>
         <console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+            <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
         </console>
 
         <File name="log" fileName="${log-path}/test.log" append="false">
@@ -57,7 +58,6 @@
 
     <loggers>
 	<logger name="org.springframework" level="all">
-            <appender-ref ref="RollingFileDebug"/>
 	</logger>
         <root level="all">
             <appender-ref ref="Console"/>

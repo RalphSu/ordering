@@ -13,6 +13,7 @@ import static net.samhouse.Utils.timeToString;
 public class Order implements Serializable {
 
     private static final long serialVersionUID = 5887207333319968742L;
+
     /**
      * represents current order id, should be a uuid value
      */
@@ -34,6 +35,11 @@ public class Order implements Serializable {
     private Step currentStep;
 
     /**
+     * Used for represent order items
+     */
+    private String payLoad;
+
+    /**
      * array list to store steps completed, generally,
      * there won't be more than 5 steps changing an order from sheduling to completed
      * so, set the initial capacity to 6
@@ -41,13 +47,22 @@ public class Order implements Serializable {
     private List<Step> steps = new ArrayList<>(6);
 
     /**
-     * set an scheduling order
+     * default constructor
      */
     public Order() {
+    }
+
+    /**
+     * @return
+     */
+    public Order init() {
         this.orderID = UUID.randomUUID().toString();
         this.startTime = System.currentTimeMillis();
         this.completeTime = this.startTime;
         this.currentStep = new Step(this.startTime);
+        this.payLoad = "";
+
+        return this;
     }
 
     /**
@@ -56,11 +71,12 @@ public class Order implements Serializable {
      * @param completeTime
      * @param currentStep
      */
-    public Order(String orderID, long startTime, long completeTime, Step currentStep) {
+    public Order(String orderID, long startTime, long completeTime, Step currentStep, String payLoad) {
         this.orderID = orderID;
         this.startTime = startTime;
         this.completeTime = completeTime;
         this.currentStep = currentStep;
+        this.payLoad = payLoad;
     }
 
     public String getOrderID() {
@@ -103,13 +119,26 @@ public class Order implements Serializable {
         this.currentStep = currentStep;
     }
 
+    public String getPayLoad() {
+        return payLoad;
+    }
+
+    public void setPayLoad(String payLoad) {
+        this.payLoad = payLoad;
+    }
+
+    /**
+     * @param currentPhase
+     */
     private void changeCurrentStep(Step.Phase currentPhase) {
         if (currentStep.getCurrentPhase() != currentPhase) {
             steps.add(currentStep.changeCurrentPhase(currentPhase));
         }
     }
+
     /**
      * as step phase changed, we need to add an item to step list
+     *
      * @param currentStep
      */
     public void changeCurrentStep(Step currentStep) {
@@ -148,33 +177,33 @@ public class Order implements Serializable {
 
         if (startTime != order.startTime) return false;
         if (completeTime != order.completeTime) return false;
-        if (!orderID.equals(order.orderID)) return false;
-        if (!currentStep.equals(order.currentStep)) return false;
-        return steps.equals(order.steps);
+        if (orderID != null ? !orderID.equals(order.orderID) : order.orderID != null) return false;
+        if (currentStep != null ? !currentStep.equals(order.currentStep) : order.currentStep != null) return false;
+        if (payLoad != null ? !payLoad.equals(order.payLoad) : order.payLoad != null) return false;
+        return steps != null ? steps.equals(order.steps) : order.steps == null;
     }
 
     @Override
     public int hashCode() {
-        int result = orderID.hashCode();
+        int result = orderID != null ? orderID.hashCode() : 0;
         result = 31 * result + (int) (startTime ^ (startTime >>> 32));
         result = 31 * result + (int) (completeTime ^ (completeTime >>> 32));
-        result = 31 * result + currentStep.hashCode();
-        result = 31 * result + steps.hashCode();
+        result = 31 * result + (currentStep != null ? currentStep.hashCode() : 0);
+        result = 31 * result + (payLoad != null ? payLoad.hashCode() : 0);
+        result = 31 * result + (steps != null ? steps.hashCode() : 0);
         return result;
     }
 
-    /**
-     * TODO use StringBuilder
-     * @return
-     */
     @Override
     public String toString() {
-        return "Order{" +
-                "orderID='" + orderID + '\'' +
-                ", startTime=" + timeToString(startTime) +
-                ", completeTime=" + timeToString(completeTime) +
-                ", currentStep=" + currentStep +
-                ", steps=" + steps +
-                '}';
+        final StringBuilder sb = new StringBuilder("Order{");
+        sb.append("orderID='").append(orderID).append('\'');
+        sb.append(", startTime=").append(timeToString(startTime));
+        sb.append(", completeTime=").append(timeToString(completeTime));
+        sb.append(", currentStep=").append(currentStep);
+        sb.append(", payLoad='").append(payLoad).append('\'');
+        sb.append(", steps=").append(steps);
+        sb.append('}');
+        return sb.toString();
     }
 }

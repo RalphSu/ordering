@@ -17,8 +17,10 @@ public class EndStateHandler implements Handler {
 
     @Autowired
     OrderService orderService;
+
     /**
      * Using "Completed" handler for both completed and failed queue
+     *
      * @return
      */
     @Override
@@ -31,6 +33,8 @@ public class EndStateHandler implements Handler {
         try {
             log.info("Order[{}] in step[{}] will goto db",
                     order.getOrderID(), order.getCurrentStep().getCurrentPhase());
+            orderService.insert(order);
+
         } catch (Exception e) {
             log.error("EndStateHandler failed to deal with order[{}] with exception {}", order.getOrderID(), e);
         }

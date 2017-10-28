@@ -1,25 +1,24 @@
 package net.samhouse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.Banner;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
+import net.samhouse.config.OrderServiceConfig;
+import net.samhouse.model.Order;
+import net.samhouse.rabbitmq.impl.OrderSender;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertNotNull;
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringBootTest(classes = OrderServiceConfig.class)
+public class MessageTest {
 
-public class MessageTest implements CommandLineRunner {
-    private static Logger log = LoggerFactory.getLogger(MessageTest.class);
+    @Autowired
+    private OrderSender orderSender;
 
-    public static void main(String[] args) throws Exception {
-        SpringApplication app = new SpringApplication(MainApp.class);
-        app.setBannerMode(Banner.Mode.OFF);
-        app.run(args);
-    }
-    @Override
-    public void run(String... args) throws Exception {
-
+    @Test
+    public void testSender() {
+        Order order = new Order().init();
+        orderSender.deliverOrder(order);
     }
 }

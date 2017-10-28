@@ -24,7 +24,7 @@ public class OrderSender {
      * @param order
      */
     public void deliverOrder(Order order) {
-        log.debug("Deliver order[{}, {}] to queue",
+        log.info("Deliver order[{}, {}] to queue",
                 order.getOrderID(), order.getCurrentStep().getCurrentPhase());
         try {
             rabbitTemplate.convertAndSend(order.getCurrentStep().getCurrentPhase().value(), order);

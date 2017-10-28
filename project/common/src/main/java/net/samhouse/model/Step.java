@@ -10,13 +10,14 @@ import static net.samhouse.Utils.timeToString;
  */
 public class Step implements Serializable {
 
+    private static final long serialVersionUID = 1784911171331472918L;
+
     public static final String SCHEDULING = "SCHEDULING";
     public static final String PRE_PROCESSING = "PRE_PROCESSING";
     public static final String PROCESSING = "PROCESSING";
     public static final String POST_PROCESSING = "POST_PROCESSING";
     public static final String COMPLETED = "COMPLETED";
     public static final String FAILED = "FAILED";
-    private static final long serialVersionUID = 1784911171331472918L;
 
     /**
      * enumeration for step phases, we have scheduling,
@@ -40,10 +41,11 @@ public class Step implements Serializable {
             this.phase = step;
         }
 
-        public final String value() {return phase;}
+        public final String value() {
+            return phase;
+        }
 
         /**
-         *
          * @param phase
          * @return
          */
@@ -70,9 +72,16 @@ public class Step implements Serializable {
     private Phase currentPhase;
 
     public Step() {
+    }
+
+    /**
+     * @return
+     */
+    public Step init() {
         this.startTime = System.currentTimeMillis();
         this.completeTime = startTime;
         currentPhase = Phase.SCHEDULING;
+        return this;
     }
 
     public Step(long startTime) {
@@ -82,7 +91,6 @@ public class Step implements Serializable {
     }
 
     /**
-     *
      * @param currentPhase
      * @param startTime
      * @param completeTime
@@ -118,7 +126,6 @@ public class Step implements Serializable {
     }
 
     /**
-     *
      * @param currentPhase
      * @return return an either new or this step object
      */
@@ -144,7 +151,6 @@ public class Step implements Serializable {
     }
 
     /**
-     *
      * @return return a new Step object
      */
     public Step moveToNextPhase() {
@@ -166,6 +172,9 @@ public class Step implements Serializable {
         }
     }
 
+    /**
+     * @return
+     */
     public Phase GetNextPhase() {
         switch (currentPhase) {
             case SCHEDULING:
@@ -185,11 +194,6 @@ public class Step implements Serializable {
         }
     }
 
-    /**
-     * Intellij generated equals method
-     * @param o
-     * @return
-     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -199,30 +203,24 @@ public class Step implements Serializable {
 
         if (startTime != step.startTime) return false;
         if (completeTime != step.completeTime) return false;
-        return currentPhase == step.currentPhase;
+        return currentPhase != null ? currentPhase.equals(step.currentPhase) : step.currentPhase == null;
     }
 
-    /**
-     * Intellij generated hashCode
-     * @return
-     */
     @Override
     public int hashCode() {
         int result = (int) (startTime ^ (startTime >>> 32));
         result = 31 * result + (int) (completeTime ^ (completeTime >>> 32));
-        result = 31 * result + currentPhase.hashCode();
+        result = 31 * result + (currentPhase != null ? currentPhase.hashCode() : 0);
         return result;
     }
 
-    /**
-     * TODO use StringBuilder
-     * @return
-     */
     @Override
     public String toString() {
-        return "Step{" +
-                "start time=" + timeToString(startTime) +
-                ", completed time=" + timeToString(completeTime) +
-                ", current phase='" + currentPhase + "'}";
+        final StringBuilder sb = new StringBuilder("Step{");
+        sb.append("startTime=").append(timeToString(startTime));
+        sb.append(", completeTime=").append(timeToString(completeTime));
+        sb.append(", currentPhase=").append(currentPhase);
+        sb.append('}');
+        return sb.toString();
     }
 }

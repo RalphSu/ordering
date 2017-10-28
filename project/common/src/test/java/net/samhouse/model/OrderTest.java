@@ -8,13 +8,13 @@ public class OrderTest {
 
     @Test
     public void testNewOrder() {
-        Order order = new Order();
+        Order order = (new Order()).init();
         assertEquals("A new order by Order() should be in scheduling phase",
                 Step.Phase.SCHEDULING, order.getCurrentStep().getCurrentPhase());
         assertNotNull("Order id should not be null", order.getOrderID());
 
         Order newOne = new Order("orderID", System.currentTimeMillis(),
-                System.currentTimeMillis(), new Step());
+                System.currentTimeMillis(), (new Step()).init(), "");
         assertEquals("A new order by Order(...) should be in scheduling phase",
                 Step.Phase.SCHEDULING, newOne.getCurrentStep().getCurrentPhase());
         assertEquals("order id should equal to 'orderID'",
@@ -23,7 +23,7 @@ public class OrderTest {
 
     @Test
     public void testChangeStep() {
-        Order order = new Order();
+        Order order = (new Order()).init();
         long currentTime = System.currentTimeMillis();
         assertEquals("Step list size should be 0 in the original status",
                 0, order.getSteps().size());

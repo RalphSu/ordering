@@ -1,6 +1,7 @@
 package net.samhouse;
 
-import org.openjdk.jmh.annotations.Benchmark;
+import net.samhouse.model.Order;
+import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.results.RunResult;
 import org.openjdk.jmh.runner.Runner;
@@ -21,16 +22,69 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * A simple micro benchmark program based on jmh
+ * which is used to test those performance critical functions
+ * We use 5 iterations for warm up and measure 5 times for a single test
+ */
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@Warmup(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+@Measurement(iterations = 5, time = 100, timeUnit = TimeUnit.MILLISECONDS)
+@Fork(5)
+@State(Scope.Thread)
 public class MicroBench {
 
+    private Order permOrder;
+
+    @Setup(Level.Iteration)
+    public void setUp() {
+        permOrder = (new Order()).init();
+    }
+
+    /**
+     * Test convert long time to string time
+     *
+     * @param bh
+     */
     @Benchmark
-    public long testTimeToString(Blackhole bh) {
+    public void testTimeToString(Blackhole bh) {
         long time = System.currentTimeMillis();
         String timeString = Utils.timeToString(time);
         bh.consume(timeString);
-        return time;
     }
 
+    /**
+     * Test move to next step of an order
+     * which is the 'main business' in this demo
+     *
+     * @param bh
+     */
+    @Benchmark
+    public void testMoveToNextStep(Blackhole bh) {
+        permOrder.moveToNextStep();
+        bh.consume(permOrder);
+    }
+
+    /**
+     * Test of initialise an order
+     *
+     * @param bh
+     */
+    @Benchmark
+    public void testInitOrder(Blackhole bh) {
+        Order order = new Order();
+        order.init();
+        bh.consume(order);
+    }
+
+    /**
+     * The main part used to generate a report
+     *
+     * @param args
+     * @throws RunnerException
+     * @throws InterruptedException
+     */
     public static void main(String[] args) throws RunnerException, InterruptedException {
         PrintWriter pw = new PrintWriter(System.out, true);
         pw.println("---- 8< (cut here) -----------------------------------------");

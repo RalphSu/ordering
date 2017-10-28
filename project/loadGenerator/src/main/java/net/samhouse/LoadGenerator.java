@@ -18,11 +18,16 @@ import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.CommandLinePropertySource;
 import org.springframework.core.env.SimpleCommandLinePropertySource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.support.BasicAuthorizationInterceptor;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -33,12 +38,14 @@ import static java.lang.System.exit;
 
 /**
  * A load generator program to insert Order into rabbitmq
+ * do not use @SpringBootApplication as the 'common' package has db related beans
+ * they will messed up this
  * TODO Add option for select different queue
  * TODO Add option for concurrently send message
+ * TODO Add option for send to a specific queue
  * ...
  */
 @EnableRabbit
-@SpringBootApplication
 @SpringBootConfiguration
 public class LoadGenerator implements CommandLineRunner {
 
@@ -65,8 +72,18 @@ public class LoadGenerator implements CommandLineRunner {
     @Value("${load.count:1000}")
     private Integer count;
 
+    @Value("${rest.url}")
+    private String resturl;
+
     @Autowired
-    RabbitTemplate rabbitTemplate;
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private RestTemplateBuilder restTemplateBuilder;
+
 
     public static void main(String[] args) throws Exception {
 
@@ -83,25 +100,83 @@ public class LoadGenerator implements CommandLineRunner {
      */
     @Override
     public void run(String... args) throws Exception {
-
         String testType = "interval";
+        String testMethod = "rabbit";
+
+        // get the command line parameters
         CommandLinePropertySource clp = new SimpleCommandLinePropertySource(args);
         if (clp.containsProperty("type")) {
             testType = clp.getProperty("type");
         }
+        if (clp.containsProperty("method")) {
+            testMethod = clp.getProperty("method");
+        }
 
-        // if send message at a time manner
+        if (testMethod.equals("rabbit") || testMethod.equals("r")) {
+            testRabbit(testType);
+        } else if (testMethod.equals("rest") || testMethod.equals("t")) {
+            testRest(testType);
+        } else {
+            System.out.println("-----------------------------------------------------------------------------");
+            System.out.println("java -jar loadGenerator.jar --type=[interval|full] --method=[rabbit|rest]");
+            System.out.println("Or you can use java -jar loadGenerator.jar --type=[i|f] --method=[r|t]");
+            System.out.println("-----------------------------------------------------------------------------");
+        }
+
+        exit(0);
+    }
+
+    /**
+     * main test function for sending message to rabbit
+     *
+     * @param testType
+     * @throws InterruptedException
+     */
+    private void testRabbit(String testType) throws InterruptedException {
         if (testType.equals("interval") || testType.equals("i")) {
-
-            // using countdown latch, maybe a little bit heavy, could use a simple volatile
-            // int wrapper
             CountDownLatch countDown = new CountDownLatch(count);
 
             final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
             executorService.scheduleAtFixedRate(() -> {
-                Order order = new Order();
-                rabbitTemplate.convertAndSend(Step.SCHEDULING, order);
-                log.info("Order {} sending completed!", order.getOrderID());
+                sendRabbit(countDown.getCount());
+                countDown.countDown();
+            }, 0, interval, TimeUnit.SECONDS);
+
+            countDown.await();
+        } else if (testType.equals("full") || testType.equals("f")) {
+            // for loop to send message at a full speed
+            for (int i = 0; i < count; i++) {
+                sendRabbit(i);
+            }
+        }
+    }
+
+    /**
+     * @param seq
+     */
+    private void sendRabbit(long seq) {
+        Order order = (new Order()).init();
+        order.setPayLoad("Count down meessage:" + Long.toString(seq));
+        rabbitTemplate.convertAndSend(Step.SCHEDULING, order);
+        log.info("Order {} sending completed!", order.getOrderID());
+    }
+
+    /**
+     * main function to send rest request
+     *
+     * @param testType
+     * @throws InterruptedException
+     */
+    private void testRest(String testType) throws InterruptedException {
+        restTemplate.getInterceptors().add(
+                new BasicAuthorizationInterceptor("submitter", "submitter"));
+
+        if (testType.equals("interval") || testType.equals("i")) {
+            CountDownLatch countDown = new CountDownLatch(count);
+
+            final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+            executorService.scheduleAtFixedRate(() -> {
+                sendRest(countDown.getCount());
                 countDown.countDown();
             }, 0, interval, TimeUnit.SECONDS);
 
@@ -110,22 +185,51 @@ public class LoadGenerator implements CommandLineRunner {
 
             // for loop to send message at a full speed
             for (int i = 0; i < count; i++) {
-                Order order = new Order();
-                rabbitTemplate.convertAndSend(Step.SCHEDULING, order);
-                log.info("Order {} sending completed!", order.getOrderID());
+                sendRest(i);
             }
-        } else {
-
-            System.out.println("-----------------------------------------------------------------------------");
-            System.out.println("java -jar loadGenerator.jar --type=[interval|full] --queue=[sc|pr|po|pp]");
-            System.out.println("Or you can use java -jar loadGenerator.jar --type=[i|f] --queue=[sc|pr|po|pp]");
-            System.out.println("-----------------------------------------------------------------------------");
         }
-
-        exit(0);
     }
 
     /**
+     * @param seq
+     * @return
+     */
+    private int sendRest(long seq) {
+        Order order = new Order();
+        order.setPayLoad("Count down meessage:" + Long.toString(seq));
+        HttpEntity<Order> httpEntity = new HttpEntity<>(order);
+        ResponseEntity<String> responseEntity = restTemplate
+                .exchange(resturl, HttpMethod.POST, httpEntity, String.class);
+
+        String response = responseEntity.getBody();
+        int status = responseEntity.getStatusCodeValue();
+
+        log.info("Send post request {} completed with response[{}] [{}]", order.getPayLoad(), response, status);
+        return status;
+    }
+
+    /**
+     * Used for rest client
+     *
+     * @param builder
+     * @return
+     */
+    @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return builder.build();
+    }
+
+    /**
+     * @return
+     */
+    @Bean
+    public RestTemplateBuilder restTemplateBuilder() {
+        return new RestTemplateBuilder();
+    }
+
+    /**
+     * All the following beans are used for rabbitmq
+     *
      * @return Return caching connection factory bean
      */
     @Bean

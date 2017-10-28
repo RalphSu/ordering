@@ -8,13 +8,11 @@ import net.samhouse.model.Order;
 public interface Handler {
 
     /**
-     *
-      * @return
+     * @return
      */
     String getName();
 
     /**
-     *
      * @param order
      * @param queue
      * @return true means to pass order on handler link, otherwise stop

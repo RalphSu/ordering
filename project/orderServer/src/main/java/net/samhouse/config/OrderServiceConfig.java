@@ -1,9 +1,12 @@
-package net.samhouse.rabbitmq.config;
+package net.samhouse.config;
 
 import com.google.common.collect.Lists;
-import net.samhouse.rabbitmq.Handler;
-import net.samhouse.rabbitmq.impl.handlers.*;
+import net.samhouse.db.config.OrderDBConfig;
 import net.samhouse.model.Step;
+import net.samhouse.rabbitmq.Handler;
+import net.samhouse.rabbitmq.impl.OrderReceiver;
+import net.samhouse.rabbitmq.impl.OrderSender;
+import net.samhouse.rabbitmq.impl.handlers.*;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer;
@@ -16,6 +19,7 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 
@@ -25,8 +29,9 @@ import java.util.List;
  * Spring configuration class
  */
 @SpringBootConfiguration
+@Import(OrderDBConfig.class)
 @EnableRabbit
-public class OpsConfig implements RabbitListenerConfigurer{
+public class OrderServiceConfig implements RabbitListenerConfigurer {
 
     @Value("${mq.rabbit.host}")
     private String host;
@@ -82,6 +87,7 @@ public class OpsConfig implements RabbitListenerConfigurer{
 
     /**
      * return handler that really handle orders
+     *
      * @return
      */
     @Bean
@@ -92,7 +98,22 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
+     * @return
+     */
+    @Bean
+    public OrderSender orderSender() {
+        return new OrderSender(rabbitTemplate());
+    }
+
+    /**
+     * @return
+     */
+    @Bean
+    public OrderReceiver orderReceiver() {
+        return new OrderReceiver();
+    }
+
+    /**
      * @return Return caching connection factory bean
      */
     @Bean
@@ -108,7 +129,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -120,7 +140,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -129,7 +148,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -138,7 +156,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -148,7 +165,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -157,7 +173,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -169,7 +184,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -178,7 +192,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -190,7 +203,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -199,7 +211,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -211,7 +222,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -220,7 +230,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -232,7 +241,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -241,7 +249,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -253,7 +260,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -262,7 +268,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -274,7 +279,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -285,7 +289,6 @@ public class OpsConfig implements RabbitListenerConfigurer{
     }
 
     /**
-     *
      * @return
      */
     @Bean
@@ -294,11 +297,14 @@ public class OpsConfig implements RabbitListenerConfigurer{
         factory.setConnectionFactory(connectionFactory());
         factory.setConcurrentConsumers(consumers);
         factory.setMaxConcurrentConsumers(maxconsumers);
+
+        // manually acknowledge the message, so, in OrderReceiver if you for some
+        // reasons the message hasn't been handled, then the message will be handled by other services
+        factory.setAcknowledgeMode(AcknowledgeMode.MANUAL);
         return factory;
     }
 
     /**
-     *
      * @param registrar
      */
     @Override

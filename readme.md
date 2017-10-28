@@ -2,6 +2,14 @@
 
 ### Design
 ![Overall design](https://github.com/nonsense-huang/ordering/blob/master/doc/ordering-process-system.png)
+![Swagger yaml](https://github.com/nonsense-huang/ordering/blob/master/swagger.yaml)
+
+### limitations
+1. So far, as the redis server as cache still hasn't been implemented, we still cannot query the orders in processing
+2. security
+  * Not implemented, only simple authentication with fixed user name and password
+  * You can use `submitter/submitter` or `querier/querier` to send post or get request
+3. No web ui
 
 **thoughts:**
 1. By using rabbitmq, we can have the message persistence ability
@@ -33,6 +41,15 @@
 * Out of scope so far
 #### performance
 * microbenchmark
+By running `java -jar microbenchmarks.jar` we can get the a micro benchmark result of some focused functions
+following is my running result on a 16G i7CPU mac laptop
+```
+Benchmark                      Mode  Cnt     Score     Error  Units
+MicroBench.testInitOrder       avgt   25  2607.068 ± 158.886  ns/op
+MicroBench.testMoveToNextStep  avgt   25    51.762 ±   2.672  ns/op
+MicroBench.testTimeToString    avgt   25  2384.491 ± 354.502  ns/op
+```
+In this demo application, we can find the business(testMoveToNextStep) is the least time consuming function :-P
 
 #### Rabbitmq
 * Four queues in rabbitmq
@@ -68,3 +85,78 @@
   * common - common module for all modules
   * orderServer - order handling service
   * restServer - rest service to client
+
+
+### How to make it work
+1. git clone to your local environment
+2. mvn clean install -DskipTests
+  * Maven needs version 3.3 or higher
+  * First time to skip the test because in unit test we need to connect to the db
+  * After build the jars, orderServer.jar will create tables automatically at its first run
+  * If for some reasons, the tables haven't been created, you can run following statements  
+
+```sql
+CREATE TABLE IF NOT EXISTS MY_ORDER (
+  ORDER_ID varchar(100) PRIMARY KEY NOT NULL,
+  BEGIN_TIME bigint NOT NULL,
+  END_TIME bigint NOT NULL,
+  PAYLOAD varchar(1000)
+);
+
+CREATE TABLE IF NOT EXISTS MY_STEP (
+  ORDER_ID varchar(100) REFERENCES MY_ORDER NOT NULL,
+  PHASE varchar(20) NOT NULL,
+  BEGIN_TIME bigint NOT NULL,
+  END_TIME bigint NOT NULL,
+  IS_CURRENT BOOLEAN NOT NULL
+);
+```
+
+#### following sql can be used to verify the results in db
+```sql
+select a.order_id, a.begin_time, a.end_time, b.phase, b.is_current, b.begin_time, b.end_time
+from my_order a, my_step b
+where a.order_id = b.order_id
+order by a.order_id
+```
+
+```sql
+select phase, count(*) from my_step group by phase;
+```
+
+#### Json example
+```json
+{
+    "orderID": "f624097c-59f0-4d4d-bec6-8e774c9fd8bf",
+    "startTime": 1509171380782,
+    "completeTime": 1509171400964,
+    "currentStep": {
+        "startTime": 1509171400964,
+        "completeTime": 1509171400964,
+        "currentPhase": "COMPLETED"
+    },
+    "payLoad": "",
+    "steps": [
+        {
+            "startTime": 1509171380782,
+            "completeTime": 1509171385946,
+            "currentPhase": "SCHEDULING"
+        },
+        {
+            "startTime": 1509171385946,
+            "completeTime": 1509171390954,
+            "currentPhase": "PRE_PROCESSING"
+        },
+        {
+            "startTime": 1509171390954,
+            "completeTime": 1509171395959,
+            "currentPhase": "PROCESSING"
+        },
+        {
+            "startTime": 1509171395959,
+            "completeTime": 1509171400964,
+            "currentPhase": "POST_PROCESSING"
+        }
+    ]
+}
+```

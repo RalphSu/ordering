@@ -1,0 +1,106 @@
+swagger: "2.0"
+info:
+  version: "1.0"
+  title: "Order processing system"
+host: "localhost"
+basePath: "/"
+schemes:
+- "http"
+securityDefinitions:
+  UserSecurities:
+    type: "basic"
+security:
+- UserSecurites:[]
+
+paths:
+  /query/{orderId}:
+    get:
+      description: "Returns an order according to order ID"
+      produces:
+      - "application/json"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          type: "string"
+          required: true
+          description: "The order id."
+      responses:
+        200:
+          description: "Returns an order object."
+          schema:
+            $ref: '#/definitions/Order'
+  /submit:
+    post:
+      summary: "Submit an order"
+      description: "submit an order"
+      consumes:
+      - "application/json"
+      produces:
+      - "string"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Order to be submitted"
+        required: false
+        schema:
+          $ref: '#/definitions/Order'
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "string"
+
+definitions:
+  Step:
+    type: "object"
+    properties:
+      startTime:
+        type: "integer"
+        format: "int64"
+        description: "step starting handling time, it's a timestamp"
+      completeTime:
+        type: "integer"
+        format: "int64"
+        description: "step completed handling time, it's a timestamp"
+      currentPhase:
+        type: "string"
+        description: "status of the current step"
+        enum:
+        - "SCHEDULING"
+        - "PRE_PROCESSING"
+        - "PROCESSING"
+        - "POST_PROCESSING"
+        - "COMPLETED"
+        - "FAILED"
+
+  Order:
+    type: "object"
+    properties:
+      orderID:
+        type: "string"
+        description: "uuid to identify an order"
+      startTime:
+        type: "integer"
+        format: "int64"
+        description: "order starting handling time, it's a timestamp"
+      completeTime:
+        type: "integer"
+        format: "int64"
+        description: "order completed handling time, it's a timestamp"
+      currentStep:
+        $ref: "#/definitions/Step"
+        description: "current step of the order"
+      payLoad:
+        type: "string"
+        description: "a payload represents the order items"
+      steps:
+        type: "array"
+        items:
+          $ref: "#/definitions/Step"
+
+  ApiResponse:
+    $ref: '#/definitions/Order'
+
+externalDocs:
+  description: "should be"
+  url: "http://localhost"
