@@ -106,7 +106,12 @@
   RABBIT_HOST: 192.168.3.80
   POSTGRE_HOST: 192.168.3.80
   ```
- 5. If everything goes well, you can open postman to send post/get request
+ 5. change following paramters to adjust the thread numbers that consume the rabbit messages
+ ```
+ RABBIT_CONSUMERS: 5
+ RABBIT_MAXCONSUMERS: 10
+ ```
+ 6. If everything goes well, you can open postman to send post/get request
     according to the swagger definition file.
 
 
