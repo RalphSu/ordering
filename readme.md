@@ -97,7 +97,7 @@
     according to the swagger definition file.
 
 **Or you can:**  
-**(This option depends on your hardware, in my laptop it needs a fresh system restart and about 10mins to wait all containers started stably)**  
+**(This option depends on your hardware, in my laptop it needs a fresh system restart and about 10mins to wait all containers started stably, but another window machine only takes 1~2mins to start in vagrant environment.)**  
  1. cd project folder
  2. execute build.sh to build the system (both jar and docker image)
  3. cd docker folder
